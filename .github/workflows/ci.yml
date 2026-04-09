@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+
+jobs:
+
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        perl: ['5.26', '5.32', '5.38', '5.40']
+    name: Linux - Perl ${{ matrix.perl }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl }}
+
+      - name: Install system deps
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libcares-dev
+
+      - name: Install Perl deps
+        run: cpanm -n EV EV::MakeMaker Alien::cares
+
+      - name: Build and test
+        run: perl Makefile.PL && make && make test
+
+  linux-alien-share:
+    runs-on: ubuntu-latest
+    name: Linux - Alien share build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.40'
+
+      - name: Install system deps
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq cmake pkg-config
+
+      - name: Install Perl deps
+        run: |
+          cpanm -n EV EV::MakeMaker Alien::Build Alien::Build::Plugin::Build::CMake Alien::Build::Plugin::Download::GitHub
+          ALIEN_INSTALL_TYPE=share cpanm -n Alien::cares
+
+      - name: Build and test
+        run: perl Makefile.PL && make && make test
+
+  alpine:
+    runs-on: ubuntu-latest
+    name: Alpine (musl)
+    container: alpine:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: |
+          apk add --no-cache perl perl-dev make gcc musl-dev \
+            c-ares-dev pkgconf wget bash curl
+
+      - name: Install Perl deps
+        run: |
+          wget -qO- https://cpanmin.us | perl - App::cpanminus
+          cpanm -n EV EV::MakeMaker Alien::cares
+
+      - name: Build and test
+        run: perl Makefile.PL && make && make test
+
+  macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        perl: ['5.32', '5.40']
+    name: macOS - Perl ${{ matrix.perl }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl }}
+
+      - name: Install system deps
+        run: brew install c-ares pkg-config
+
+      - name: Install Perl deps
+        run: cpanm -n EV EV::MakeMaker Alien::cares
+
+      - name: Build and test
+        run: perl Makefile.PL && make && make test
+
+  freebsd:
+    runs-on: ubuntu-latest
+    name: FreeBSD
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test on FreeBSD
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            pkg install -y perl5 p5-EV libcares pkgconf gmake
+            pkg install -y p5-App-cpanminus
+            cpanm -n EV::MakeMaker Alien::cares
+          run: |
+            perl Makefile.PL && gmake && gmake test
+
+  openbsd:
+    runs-on: ubuntu-latest
+    name: OpenBSD
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            pkg_add p5-EV libcares curl
+            curl -L https://cpanmin.us | perl - App::cpanminus
+            cpanm -n EV::MakeMaker Alien::cares
+          run: |
+            perl Makefile.PL && make && make test

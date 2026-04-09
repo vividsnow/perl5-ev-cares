@@ -1,0 +1,12 @@
+/blib/
+/Makefile
+/Makefile.old
+/MYMETA.*
+/MANIFEST.bak
+/pm_to_blib
+*.o
+*.bs
+/cares.c
+*.tar.gz
+/CLAUDE.md
+/.claude/
