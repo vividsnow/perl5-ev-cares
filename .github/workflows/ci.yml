@@ -15,17 +15,19 @@ jobs:
         perl: ['5.26', '5.32', '5.38', '5.40']
     name: Linux - Perl ${{ matrix.perl }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
 
       - name: Install system deps
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq libcares-dev
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libc-ares-dev
 
       - name: Install Perl deps
-        run: cpanm -n EV EV::MakeMaker Alien::cares
+        run: |
+          cpanm -n EV EV::MakeMaker Alien::Build Alien::Build::Plugin::Build::CMake Alien::Build::Plugin::Download::GitHub Test::Alien
+          cpanm -n https://github.com/vividsnow/perl5-alien-cares.git
 
       - name: Build and test
         run: perl Makefile.PL && make && make test
@@ -34,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Linux - Alien share build
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shogo82148/actions-setup-perl@v1
         with:
@@ -45,8 +47,8 @@ jobs:
 
       - name: Install Perl deps
         run: |
-          cpanm -n EV EV::MakeMaker Alien::Build Alien::Build::Plugin::Build::CMake Alien::Build::Plugin::Download::GitHub
-          ALIEN_INSTALL_TYPE=share cpanm -n Alien::cares
+          cpanm -n Mojo::DOM58 Alien::cmake3 EV EV::MakeMaker Test::Alien Alien::Build Alien::Build::Plugin::Build::CMake Alien::Build::Plugin::Download::GitHub
+          ALIEN_INSTALL_TYPE=share cpanm -n https://github.com/vividsnow/perl5-alien-cares.git
 
       - name: Build and test
         run: perl Makefile.PL && make && make test
@@ -56,17 +58,18 @@ jobs:
     name: Alpine (musl)
     container: alpine:latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install system deps
         run: |
           apk add --no-cache perl perl-dev make gcc musl-dev \
-            c-ares-dev pkgconf wget bash curl
+            c-ares-dev pkgconf wget bash curl git
 
       - name: Install Perl deps
         run: |
           wget -qO- https://cpanmin.us | perl - App::cpanminus
-          cpanm -n EV EV::MakeMaker Alien::cares
+          cpanm -n EV EV::MakeMaker Alien::Build Alien::Build::Plugin::Build::CMake Alien::Build::Plugin::Download::GitHub Test::Alien
+          cpanm -n https://github.com/vividsnow/perl5-alien-cares.git
 
       - name: Build and test
         run: perl Makefile.PL && make && make test
@@ -79,7 +82,7 @@ jobs:
         perl: ['5.32', '5.40']
     name: macOS - Perl ${{ matrix.perl }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shogo82148/actions-setup-perl@v1
         with:
@@ -89,7 +92,9 @@ jobs:
         run: brew install c-ares pkg-config
 
       - name: Install Perl deps
-        run: cpanm -n EV EV::MakeMaker Alien::cares
+        run: |
+          cpanm -n EV EV::MakeMaker Alien::Build Alien::Build::Plugin::Build::CMake Alien::Build::Plugin::Download::GitHub Test::Alien
+          cpanm -n https://github.com/vividsnow/perl5-alien-cares.git
 
       - name: Build and test
         run: perl Makefile.PL && make && make test
@@ -98,16 +103,17 @@ jobs:
     runs-on: ubuntu-latest
     name: FreeBSD
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Test on FreeBSD
         uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
           prepare: |
-            pkg install -y perl5 p5-EV libcares pkgconf gmake
+            pkg install -y perl5 p5-EV c-ares pkgconf gmake git
             pkg install -y p5-App-cpanminus
-            cpanm -n EV::MakeMaker Alien::cares
+            cpanm -n EV::MakeMaker Alien::Build Alien::Build::Plugin::Build::CMake Alien::Build::Plugin::Download::GitHub Test::Alien
+            cpanm -n https://github.com/vividsnow/perl5-alien-cares.git
           run: |
             perl Makefile.PL && gmake && gmake test
 
@@ -115,15 +121,45 @@ jobs:
     runs-on: ubuntu-latest
     name: OpenBSD
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Test on OpenBSD
         uses: vmactions/openbsd-vm@v1
         with:
           usesh: true
           prepare: |
-            pkg_add p5-EV libcares curl
+            pkg_add p5-EV libcares curl git
             curl -L https://cpanmin.us | perl - App::cpanminus
-            cpanm -n EV::MakeMaker Alien::cares
+            cpanm -n EV::MakeMaker Alien::Build Alien::Build::Plugin::Build::CMake Alien::Build::Plugin::Download::GitHub Test::Alien
+            cpanm -n https://github.com/vividsnow/perl5-alien-cares.git
           run: |
             perl Makefile.PL && make && make test
+
+  asan:
+    runs-on: ubuntu-latest
+    name: Linux - asan
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.40'
+
+      - name: Install system deps
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libc-ares-dev
+
+      - name: Install Perl deps
+        run: |
+          cpanm -n EV EV::MakeMaker Alien::Build Alien::Build::Plugin::Build::CMake Alien::Build::Plugin::Download::GitHub Test::Alien
+          cpanm -n https://github.com/vividsnow/perl5-alien-cares.git
+
+      - name: Build with asan
+        run: |
+          perl Makefile.PL OPTIMIZE='-fsanitize=address -fno-omit-frame-pointer -g -O1'
+          make OTHERLDFLAGS='-fsanitize=address'
+
+      - name: Test under asan
+        env:
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1:abort_on_error=1
+        run: |
+          LD_PRELOAD=$(gcc -print-file-name=libasan.so) make test

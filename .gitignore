@@ -8,5 +8,6 @@
 *.bs
 /cares.c
 *.tar.gz
+/EV-cares-*/
 /CLAUDE.md
 /.claude/
