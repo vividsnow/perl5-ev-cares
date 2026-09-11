@@ -15,7 +15,7 @@ jobs:
         perl: ['5.26', '5.32', '5.38', '5.40']
     name: Linux - Perl ${{ matrix.perl }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: shogo82148/actions-setup-perl@v1
         with:
@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Linux - Alien share build
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: shogo82148/actions-setup-perl@v1
         with:
@@ -58,7 +58,7 @@ jobs:
     name: Alpine (musl)
     container: alpine:latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install system deps
         run: |
@@ -82,7 +82,7 @@ jobs:
         perl: ['5.32', '5.40']
     name: macOS - Perl ${{ matrix.perl }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: shogo82148/actions-setup-perl@v1
         with:
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     name: FreeBSD
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Test on FreeBSD
         uses: vmactions/freebsd-vm@v1
@@ -121,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     name: OpenBSD
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Test on OpenBSD
         uses: vmactions/openbsd-vm@v1
@@ -139,7 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Linux - asan
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: shogo82148/actions-setup-perl@v1
         with:
@@ -168,7 +168,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Linux - valgrind
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: shogo82148/actions-setup-perl@v1
         with:
