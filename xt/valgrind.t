@@ -10,6 +10,10 @@ plan skip_all => 'valgrind not in PATH'
 # its non-debug-perl exit noise is useless here -- leaks are xt/leak.t's job
 
 my %scenario = (
+    'local DNS socket and parser regressions' => <<'PERL',
+do './t/19_local_dns.t';
+die $@ if $@;
+PERL
     'basic resolve + destroy' => <<'PERL',
 use EV;
 use EV::cares qw(:status);

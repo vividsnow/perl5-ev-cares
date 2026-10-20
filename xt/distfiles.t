@@ -13,7 +13,7 @@ plan skip_all => 'tar not available' unless `which tar 2>/dev/null` =~ /tar/;
 
 # Build a dist into a temp dir so we don't disturb the working tree
 my $tmpdir = File::Temp->newdir(CLEANUP => 1);
-system("cp -r . $tmpdir/src && cd $tmpdir/src && perl Makefile.PL >/dev/null 2>&1 "
+system("cp -r . $tmpdir/src && cd $tmpdir/src && rm -f *.tar* && perl Makefile.PL >/dev/null 2>&1 "
      . "&& make dist >/dev/null 2>&1") == 0
     or do { plan skip_all => 'failed to build dist'; };
 
